@@ -1,0 +1,31 @@
+# mqtt-access.yaml - Allow MQTT traffic from app pods and Ingress Controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-mqtt-access
+  namespace: robot-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: mqtt
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow robot and telemetry services to connect via TCP 1883
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [robot-service, telemetry-service]
+      ports:
+        - protocol: TCP
+          port: 1883
+    # Allow NGINX Ingress Controller to connect via WebSocket port 9001
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 9001
