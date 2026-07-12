@@ -1,0 +1,27 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "Active MQTT Sessions",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "mqtt_sessions_active", "legendFormat": "Active Sessions", "refId": "A" }
+      ]
+    },
+    {
+      "title": "MQTT Message Publish Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        { "expr": "rate(mqtt_messages_published_total[5m])", "legendFormat": "publishes/sec", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "MQTT Broker",
+  "version": 1
+}
