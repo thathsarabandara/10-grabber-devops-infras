@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: robot-service-config
+  namespace: robot-platform
+  labels:
+    app: robot-service
+    app.kubernetes.io/name: robot-service
+    app.kubernetes.io/part-of: grabber-platform
+data:
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  MQTT_BROKER: "mqtt"
+  MQTT_PORT: "1883"
+  PROJECT_NAME: "Robot Service"
