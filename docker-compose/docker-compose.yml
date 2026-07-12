@@ -269,6 +269,32 @@ services:
     networks:
       - grabber-network
 
+  jenkins:
+    container_name: grabber-jenkins
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    restart: always
+    user: root
+    ports:
+      - "8082:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - grabber-network
+
+  jenkins-tunnel:
+    container_name: grabber-jenkins-tunnel
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel --no-autoupdate run --url http://jenkins:8080
+    depends_on:
+      - jenkins
+    networks:
+      - grabber-network
+
 volumes:
   db_data:
   ai_vectordb:
@@ -282,6 +308,8 @@ volumes:
   auth_uploads:
     driver: local
   telemetry_uploads:
+    driver: local
+  jenkins_data:
     driver: local
 
 networks:
