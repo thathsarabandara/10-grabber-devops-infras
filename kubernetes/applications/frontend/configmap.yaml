@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: robot-platform
+  labels:
+    app: frontend
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: grabber-platform
+data:
+  # The public domain of the API Gateway, which the browser client will call.
+  # This is replaced/configured depending on domains.env.
+  REACT_APP_API_URL: "https://api.example.com"
