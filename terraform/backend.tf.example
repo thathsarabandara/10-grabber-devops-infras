@@ -1,0 +1,28 @@
+# backend.tf.example - Backend Configurations Template
+# Copy this file to backend.tf and configure values to enable remote backend state management.
+
+# ==========================================
+# 1. AWS S3 Backend Configuration
+# ==========================================
+# terraform {
+#   backend "s3" {
+#     bucket         = "grabber-terraform-state-bucket"
+#     key            = "environments/local-vm/terraform.tfstate"
+#     region         = "us-east-1"
+#     encrypt        = true
+#     dynamodb_table = "grabber-terraform-lock-table"
+#   }
+# }
+
+# ==========================================
+# 2. Terraform Cloud / HashiCorp Cloud Platform
+# ==========================================
+# terraform {
+#   cloud {
+#     organization = "grabber-platform"
+#
+#     workspaces {
+#       name = "grabber-local-vm"
+#     }
+#   }
+# }

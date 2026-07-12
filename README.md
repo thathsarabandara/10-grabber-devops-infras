@@ -1,9 +1,9 @@
 # ⚙️ Grabber DevOps & Infrastructure
 
-> **Repository `11`** · Operations, deployment automation, and monitoring hub for the Grabber ecosystem. Manages Docker Compose orchestrations, automated database initialization scripts, Prometheus/Grafana provisioning configurations, and Kubernetes Infrastructure-as-Code (IaC) deployment manifests using Terraform.
+> **Repository `11`** · Operations, deployment automation, monitoring, and security hub for the Grabber ecosystem. Configures a single-node k3s cluster hosted on an Ubuntu Server VM exposed via Cloudflare Tunnel, while preserving local development Compose blueprints.
 
-[![Ops](https://img.shields.io/badge/Ops-Docker%20Compose-2496ED?logo=docker&style=flat-square)]()
-[![IaC](https://img.shields.io/badge/IaC-Terraform%20%7C%20Kubernetes-7B42BC?logo=terraform&style=flat-square)]()
+[![Kubernetes](https://img.shields.io/badge/Orchestrator-k3s-blue?logo=kubernetes&style=flat-square)]()
+[![Tunnel](https://img.shields.io/badge/Tunnel-Cloudflare-F38020?logo=cloudflare&style=flat-square)]()
 [![Monitoring](https://img.shields.io/badge/Monitoring-Prometheus%20%7C%20Grafana-orange?logo=grafana&style=flat-square)]()
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg?style=flat-square)]()
 
@@ -21,159 +21,187 @@
 
 ---
 
-## 🧭 What Is This Repository?
+## 🧭 System Ingress and Deployment Architecture
 
-The **DevOps and Infrastructure repository** orchestrates the deployment and scaling of the Grabber system. It separates the runtime application logic from system deployment, networking, and monitoring.
+The production environment deploys to a single Ubuntu Server VM using k3s. No public inbound VM ports (e.g. 80, 443, 3306) are required. External connections route securely via an outbound Cloudflare Tunnel to the NGINX Ingress controller, which directs traffic to the frontend dashboard, microservices, messaging, or Grafana dashboards.
 
-### Key Core Functions
-1. **Master Environment Configuration**: Consolidates all environment credentials (`.env`) for databases, brokers, emails, and API configurations.
-2. **Docker Compose Orchestrator**: Runs the complete local development stack, including databases, admin tools, MQTT brokers, microservices, and monitoring dashboards.
-3. **Database Auto-Initialization**: Provisions and configures MySQL schemas and user permissions on startup.
-4. **Scraping & Monitoring**: Configures Prometheus to collect API Gateway metrics and Grafana to visualize system performance.
-5. **Infrastructure-as-Code (IaC)**: Includes Terraform manifests to deploy databases, caches, gateways, and monitoring stacks to Kubernetes namespaces.
+```mermaid
+graph TD
+    %% Internet/Clients
+    User([Public User / Browser])
+    ESP32([ESP32 Robot Arm])
+
+    subgraph Cloudflare Edge
+        CF[Cloudflare Edge Proxies]
+        CFT[Tunnel Endpoint]
+    end
+
+    subgraph Ubuntu VM Cluster
+        Tunnel[cloudflared Pod]
+        IngController[NGINX Ingress Controller]
+        
+        Frontend[Frontend Web App]
+        Gateway[API Gateway]
+        MQTT[Mosquitto Broker WS]
+        
+        Auth[Auth Service]
+        Robot[Robot Service]
+        Telemetry[Telemetry Service]
+        AI[AI Service]
+        
+        MySQL[(MySQL StatefulSet)]
+        Redis[(Redis StatefulSet)]
+    end
+
+    User -->|dashboard.example.com| CF
+    User -->|api.example.com| CF
+    ESP32 -->|mqtt.example.com| CF
+    
+    CF --> CFT
+    CFT <==|Secure Outbound Tunnel|==> Tunnel
+    
+    Tunnel --> IngController
+    
+    IngController -->|Host: dashboard.example.com| Frontend
+    IngController -->|Host: api.example.com| Gateway
+    IngController -->|Host: mqtt.example.com| MQTT
+    
+    Gateway --> Auth
+    Gateway --> Robot
+    Gateway --> Telemetry
+    Gateway --> AI
+    
+    Auth --> MySQL
+    Auth --> Redis
+    Robot --> MySQL
+    Robot --> Redis
+    Robot --> MQTT
+    Telemetry --> MySQL
+    Telemetry --> Redis
+    Telemetry --> MQTT
+    AI --> MySQL
+    AI --> Redis
+```
+
+For a comprehensive explanation, see [docs/architecture.md](docs/architecture.md).
 
 ---
 
 ## 📦 Project Structure
 
+```text
+devops-infra/
+├── README.md               # Main instructions and overview
+├── Makefile                # Commanding interface
+├── .gitignore              # Git ignore configuration
+├── .env.example            # Environment configuration template
+│
+├── config/                 # Static configuration files
+│   ├── repositories.env.example
+│   ├── platform.env.example
+│   └── domains.env.example
+│
+├── scripts/                # Task automation bash scripts
+│   ├── bootstrap-vm.sh     # Prepare VM configurations
+│   ├── install-tools.sh    # Install kubectl, helm, etc.
+│   ├── install-k3s.sh      # Setup k3s cluster
+│   ├── clone-all-repos.sh  # Clone app source files
+│   ├── pull-all-repos.sh   # Safely sync apps
+│   ├── create-secrets.sh   # Construct k8s secrets
+│   ├── deploy-infrastructure.sh # Deploy databases, broker, ingress
+│   ├── deploy-applications.sh   # Deploy microservices and ingress
+│   ├── deploy-monitoring.sh     # Setup Prometheus and Grafana
+│   ├── deploy-cloudflare.sh     # Setup Cloudflare Tunnel connector
+│   ├── verify-deployment.sh     # Cluster health checking
+│   ├── restart-platform.sh      # Rollout restart applications
+│   ├── backup-mysql.sh          # Execute database dump
+│   ├── restore-mysql.sh         # Load database dump
+│   └── uninstall-platform.sh    # Platform cleanups
+│
+├── kubernetes/             # Main declarative manifests
+│   ├── namespaces/         # Namespace specifications
+│   ├── infrastructure/     # DB, cache, broker resources
+│   ├── applications/       # App deployment configs
+│   ├── ingress/            # NGINX Routing maps
+│   └── security/           # Network isolation policies
+│
+├── helm/                   # Helm configurations values
+│   ├── ingress-nginx-values.yaml
+│   └── monitoring-values.yaml
+│
+├── cloudflare/             # Cloudflare Tunnel resources
+│   ├── deployment.yaml
+│   └── secret.example.yaml
+│
+├── monitoring/             # Alerts and dashboard definitions
+│   ├── service-monitors/   # Custom ServiceMonitors
+│   ├── alert-rules/        # Prometheus AlertRules
+│   └── dashboards/         # Provisioning dashboards
+│
+├── backups/                # Local database dumps
+│   └── .gitkeep
+│
+├── docker-compose/         # Legacy local dev stack (Preserved)
+│   ├── docker-compose.yml
+│   ├── jenkins/
+│   └── databases/
+│
+└── docs/                   # Full documentation folders
+    ├── architecture.md
+    ├── vm-setup.md
+    ├── deployment.md
+    ├── cloudflare.md
+    ├── monitoring.md
+    ├── backup-restore.md
+    └── troubleshooting.md
 ```
-11-grabber-devops-infras/
-├── databases/
-│   └── mysql-init.sql      # Database provisioning script (MySQL initialization)
-├── grafana/
-│   └── provisioning/
-│       ├── dashboards/     # Automated Grafana dashboard imports
-│       └── datasources/    # Default Prometheus datasource integrations
-├── prometheus/
-│   └── prometheus.yml      # Scraping configurations for API Gateway metrics
-├── terraform/
-│   └── k8s/                # Kubernetes IaC configurations using Terraform
-│       ├── provider.tf      # Kubernetes resource provider
-│       ├── namespaces.tf    # System & monitoring namespace declarations
-│       ├── secrets.tf       # DB/JWT credential variables
-│       ├── mysql.tf         # Persistent MySQL DB deployment
-│       ├── redis.tf         # Ephemeral Redis cache deployment
-│       ├── api_gateway.tf   # Node.js API Gateway deployment
-│       ├── auth_service.tf  # FastAPI Auth service deployment
-│       └── monitoring.tf    # Prometheus/Grafana monitoring deployment
-├── .env                    # System-wide configuration environment variables
-├── docker-compose.yml      # Master local dev composer orchestration file
-└── README.md
-```
-
-### Module Code Index
-
-* **Docker Orchestrator**:
-  * [docker-compose.yml](docker-compose.yml): Coordinates the launch sequence of the entire backend stack, establishing container dependency hierarchies (e.g., microservices waiting for database healthchecks).
-
-* **Database Provisioner**:
-  * [databases/mysql-init.sql](databases/mysql-init.sql): Runs automatically when the MySQL container starts. Creates the 5 isolated schemas (`grabber_gateway`, `grabber_auth`, `grabber_robot`, `grabber_telemetry`, and `grabber_ai`) and configures user permissions.
-
-* **Metrics & Dashboards**:
-  * [prometheus/prometheus.yml](prometheus/prometheus.yml): Configures Prometheus to scrape gateway metrics from `api-gateway:8000` at a 15-second interval.
-  * [grafana/provisioning/datasources/datasource.yml](grafana/provisioning/datasources/datasource.yml): Configures the default Prometheus datasource at `http://prometheus:9090`.
-  * [grafana/provisioning/dashboards/dashboard.yml](grafana/provisioning/dashboards/dashboard.yml): Automatically mounts dashboard JSON templates (such as the [API Gateway Dashboard](grafana/provisioning/dashboards/api-gateway.json)) to Grafana.
-
-* **Infrastructure-as-Code (IaC)**:
-  * [terraform/k8s/namespaces.tf](terraform/k8s/namespaces.tf): Defines the target namespaces for Kubernetes deployments (`grabber-system` and `monitoring`).
-  * [terraform/k8s/variables.tf](terraform/k8s/variables.tf): Declares configurable inputs for namespaces, database passwords, and JWT secret keys.
 
 ---
 
-## ⚡ Master Environment Variables Checklist
+## ⚡ Quick Start
 
-The system-wide [.env](.env) file configures the following key settings:
+For detailed preparation steps, see [docs/vm-setup.md](docs/vm-setup.md) and [docs/deployment.md](docs/deployment.md).
 
-### 1. Database Credentials
-* `DB_HOST`: Host address of the database server (`db`).
-* `DB_USER` / `DB_PASSWORD`: Credentials for the microservice database user.
-* `MYSQL_ROOT_PASSWORD`: Master administrator password for the MySQL server.
-* `DB_NAME_*`: Database names for the gateway, auth, robot, telemetry, and AI services.
-
-### 2. JWT Security Keys
-* `JWT_SECRET` / `SECRET_KEY`: Cryptographic signing keys (must match across services).
-* `JWT_EXPIRES_IN`: Access token expiration duration (default: `24h`).
-* `ACCESS_TOKEN_EXPIRE_MINUTES`: API token lifespan (default: `300`).
-
-### 3. SMTP Mail Configs
-* `MAIL_USERNAME` / `MAIL_PASSWORD`: SMTP credentials for email verifications.
-* `MAIL_PORT` / `MAIL_SERVER`: SMTP server endpoint details.
-
-### 4. Microservice Database Connection Strings
-* `AUTH_DATABASE_URL`: `mysql+pymysql://thathsara:BandaPutha@db/grabber_auth`
-* `ROBOT_DATABASE_URL`: `mysql+aiomysql://thathsara:BandaPutha@db/grabber_robot`
-* `TELEMETRY_DATABASE_URL`: `mysql+aiomysql://thathsara:BandaPutha@db/grabber_telemetry`
-* `AI_DATABASE_URL`: `mysql+pymysql://thathsara:BandaPutha@db/grabber_ai`
-
-### 5. MQTT Broker settings
-* `MQTT_BROKER` / `MQTT_PORT`: Connection details for the Mosquitto broker.
-* `MQTT_USERNAME` / `MQTT_PASSWORD`: Authentication credentials for broker access.
-
----
-
-## 🚀 Deployment Instructions
-
-### 1. Local Development Stack (Docker Compose)
-Start the entire backend stack, including databases, microservices, and monitoring tools:
 ```bash
-# Start all containers in detatched mode
-docker compose up -d
-```
+# 1. Copy config templates and populate credentials
+cp .env.example .env
+cp config/repositories.env.example config/repositories.env
+cp config/platform.env.example config/platform.env
+cp config/domains.env.example config/domains.env
 
-#### Accessing Administrative Dashboards:
-* **API Gateway**: `http://localhost:8000`
-* **Auth Service**: `http://localhost:8001`
-* **Robot Service**: `http://localhost:8002`
-* **Telemetry Service**: `http://localhost:8003`
-* **AI Service**: `http://localhost:8004`
-* **Prometheus**: `http://localhost:9090`
-* **Grafana**: `http://localhost:3001` (Default credentials: `admin` / `admin`)
-* **phpMyAdmin**: `http://localhost:8081` (Database administration interface)
-* **Adminer**: `http://localhost:8080` (Alternative database client)
+# 2. Bootstrap VM and install tools (kubectl, helm, k3s)
+sudo make install
 
-### 2. Local VM Hosting & Public Tunneling
-If you want to host the platform on a local Ubuntu Server VM and access it securely over the internet:
-* Refer to the detailed setup guide: [docs/ubuntu-vm-setup-tunneling.md](docs/ubuntu-vm-setup-tunneling.md) for VM sizing, Netplan settings, Docker setup, Cloudflare Tunnels/Ngrok configurations, and ESP32 firmware updates.
+# 3. Clone microservices repositories
+make clone
 
----
+# 4. Generate cluster secrets
+make secrets
 
-### 3. AWS Cloud Hosting & GitOps Pipeline
-If you want to host the platform in the AWS Cloud with automated CI/CD:
-* Refer to the detailed guide: [docs/aws-cloud-hosting-gitops.md](docs/aws-cloud-hosting-gitops.md) for theoretical service mappings (RDS, ElastiCache, EKS, ALB), AWS Terraform code, Jenkins CI Pipelines, and ArgoCD (GitOps) Continuous Deployment configurations.
+# 5. Deploy all infrastructure and application components
+make deploy
 
----
-
-### 4. Cloud/Cluster Kubernetes Deployments (Terraform)
-Deploy the system to a Kubernetes cluster:
-```bash
-# Navigate to k8s directory
-cd terraform/k8s
-
-# Initialize Terraform providers
-terraform init
-
-# Review execution plan
-terraform plan
-
-# Deploy infrastructure to the cluster
-terraform apply -auto-approve
+# 6. Verify rollout health
+make verify
 ```
 
 ---
 
-## 🔗 Related Grabber Repositories
+## 🛠️ Common Operations Interface
 
-| Repository | Purpose |
+Manage your deployment using the root `Makefile` targets:
+
+| Command | Action |
 |---|---|
-| [`01-grabber-architecture`](https://github.com/thathsarabandara/01-grabber-architecture) | System blueprints, MQTT schemas, and database designs |
-| [`02-grabber-firmware`](https://github.com/thathsarabandara/02-grabber-firmware) | ESP32 main controller firmware and servo controls |
-| [`03-grabber-mobile-app`](https://github.com/thathsarabandara/03-grabber-mobile-app) | Flutter app remote teleoperation HUD |
-| [`05-grabber-api-gateway`](https://github.com/thathsarabandara/05-grabber-api-gateway) | Inbound router proxying app REST & WebSocket requests |
-| [`06-grabber-auth-service`](https://github.com/thathsarabandara/06-grabber-auth-service) | Service managing user profiles, image updates, and JWT sessions |
-| [`07-grabber-robot-service`](https://github.com/thathsarabandara/07-grabber-robot-service) | Service processing joint commands and homing schedules |
-| [`08-grabber-telemetry-service`](https://github.com/thathsarabandara/08-grabber-telemetry-service) | Core service publishing live telemetry and webcam captures |
-| [`09-grabber-ai-service`](https://github.com/thathsarabandara/09-grabber-ai-service) | Engine orchestrating autonomous sorting tasks and YOLO models |
-| [`10-grabber-mqtt-server`](https://github.com/thathsarabandara/grabber-mqtt-service) | Eclipse Mosquitto MQTT broker configuration and credentials |
+| `make status` | Check host nodes, platform pods, and system namespaces status. |
+| `make logs` | Stream logs from all platform containers. |
+| `make restart` | Perform a rolling rollout restart of the microservice deployments. |
+| `make backup` | Trigger a MySQL backup dump into `backups/mysql/`. |
+| `make restore BACKUP_FILE=<path>` | Restore MySQL databases from a valid SQL file with validation warnings. |
+| `make uninstall` | Uninstall applications while preserving storage volumes. |
+| `make uninstall MODE=delete-data` | Uninstall everything and wipe database persistent volumes (requires confirmation). |
+
+For detailed debugging steps, see [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ---
 

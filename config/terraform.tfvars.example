@@ -1,0 +1,33 @@
+platform_name = "grabber-platform"
+environment   = "local-vm"
+
+platform_namespace   = "robot-platform"
+monitoring_namespace = "monitoring"
+ingress_namespace    = "ingress-nginx"
+cloudflare_namespace = "cloudflare"
+
+kubeconfig_path = "/home/ubuntu/.kube/config"
+
+root_domain      = "example.com"
+dashboard_domain = "dashboard.example.com"
+api_domain       = "api.example.com"
+grafana_domain   = "grafana.example.com"
+mqtt_domain      = "mqtt.example.com"
+
+cloudflare_account_id = ""
+cloudflare_zone_id    = ""
+cloudflare_tunnel_id  = ""
+
+enable_monitoring                 = true
+enable_cloudflare_dns             = true
+enable_cloudflare_tunnel_resources = false
+
+storage_class_name      = "local-path"
+prometheus_storage_size = "10Gi"
+grafana_storage_size    = "2Gi"
+backup_storage_size     = "10Gi"
+
+prometheus_retention = "7d"
+
+ingress_nginx_chart_version   = "4.10.1"
+kube_prometheus_stack_version = "60.0.1"
