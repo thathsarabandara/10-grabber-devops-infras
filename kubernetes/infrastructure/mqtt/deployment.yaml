@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt
+  namespace: robot-platform
+  labels:
+    app: mqtt
+    app.kubernetes.io/name: mqtt
+    app.kubernetes.io/part-of: grabber-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqtt
+  template:
+    metadata:
+      labels:
+        app: mqtt
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        fsGroup: 1883
+      initContainers:
+        - name: init-mosquitto
+          image: eclipse-mosquitto:2.0.18
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Bootstrapping configuration and password file..."
+              cp /mosquitto/config-template/mosquitto.conf /mosquitto/config/mosquitto.conf
+              touch /mosquitto/config/pwfile
+              chmod 600 /mosquitto/config/pwfile
+              mosquitto_passwd -b /mosquitto/config/pwfile "$MQTT_USERNAME" "$MQTT_PASSWORD"
+          env:
+            - name: MQTT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-secrets
+                  key: mqtt-username
+            - name: MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-secrets
+                  key: mqtt-password
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 1883
+            runAsGroup: 1883
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: config-template
+              mountPath: /mosquitto/config-template
+            - name: config-shared
+              mountPath: /mosquitto/config
+      containers:
+        - name: mqtt
+          image: eclipse-mosquitto:2.0.18
+          imagePullPolicy: IfNotPresent
+          command:
+            - mosquitto
+            - -c
+            - /mosquitto/config/mosquitto.conf
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 1883
+            runAsGroup: 1883
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          ports:
+            - containerPort: 1883
+              name: mqtt-tcp
+            - containerPort: 9001
+              name: mqtt-ws
+          livenessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: config-shared
+              mountPath: /mosquitto/config
+            - name: mqtt-data
+              mountPath: /mosquitto/data
+              subPath: data
+            - name: mqtt-data
+              mountPath: /mosquitto/log
+              subPath: log
+      volumes:
+        - name: config-template
+          configMap:
+            name: mqtt-config
+        - name: config-shared
+          emptyDir: {}
+        - name: mqtt-data
+          persistentVolumeClaim:
+            claimName: mqtt-data-pvc
