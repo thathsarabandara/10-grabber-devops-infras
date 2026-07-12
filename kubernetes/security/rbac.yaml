@@ -1,0 +1,25 @@
+# rbac.yaml - Minimal Role and RoleBindings for Platform Workloads
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-app-role
+  namespace: robot-platform
+rules:
+  # Pods only need permission to read namespace metadata or basic configs
+  - apiGroups: [""]
+    resources: ["configmaps", "services"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-app-rolebinding
+  namespace: robot-platform
+subjects:
+  - kind: ServiceAccount
+    name: platform-app-sa
+    namespace: robot-platform
+roleRef:
+  kind: Role
+  name: platform-app-role
+  apiGroup: rbac.authorization.k8s.io
