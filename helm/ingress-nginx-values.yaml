@@ -1,0 +1,39 @@
+# ingress-nginx-values.yaml - Custom values for single-node k3s and Cloudflare Tunnel integration
+controller:
+  replicaCount: 1
+  kind: Deployment
+  
+  # Configure resource requests and limits suitable for a small VM
+  resources:
+    requests:
+      cpu: 100m
+      memory: 90Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  # Disable LoadBalancer and use ClusterIP since Cloudflare Tunnel connects internally
+  service:
+    type: ClusterIP
+    externalIPs: []
+    loadBalancerIP: ""
+
+  # Enable default Ingress Class resource named "nginx"
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: true
+    controllerValue: "k8s.io/ingress-nginx"
+
+  # We don't need external port bindings
+  hostPort:
+    enabled: false
+
+  # Metrics scraping for Prometheus
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: monitoring
+      additionalLabels:
+        release: prometheus
