@@ -1,0 +1,81 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: infrastructure-alerts
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    release: prometheus
+spec:
+  groups:
+    - name: platform-infrastructure-alerts
+      rules:
+        # 1. MySQL unavailable
+        - alert: MySQLUnavailable
+          expr: mysql_up{job="mysql"} == 0 or count(up{job="mysql"}) == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "MySQL Database is unavailable"
+            description: "The primary MySQL instance is down or unreachable."
+
+        # 2. Redis unavailable
+        - alert: RedisUnavailable
+          expr: redis_up{job="redis"} == 0 or count(up{job="redis"}) == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Redis Cache is unavailable"
+            description: "The Redis container is down or failing health checks."
+
+        # 3. MQTT unavailable
+        - alert: MQTTUnavailable
+          expr: up{job="mqtt"} == 0 or count(up{job="mqtt"}) == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "MQTT Mosquitto Broker is unavailable"
+            description: "The Mosquitto broker is down. Robots cannot stream telemetry or receive commands."
+
+        # 4. Persistent volume usage high
+        - alert: PersistentVolumeSpaceLow
+          expr: (kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes) * 100 < 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Persistent volume {{ $labels.persistentvolumeclaim }} space is low"
+            description: "Available space on PVC {{ $labels.persistentvolumeclaim }} is below 10% (current: {{ $value | printf \"%.2f\" }}%)."
+
+        # 5. Node disk space low
+        - alert: NodeDiskSpaceLow
+          expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Low disk space on host VM node"
+            description: "Available disk space on VM root mountpoint '/' is below 10% (current: {{ $value | printf \"%.2f\" }}%)."
+
+        # 6. High memory usage
+        - alert: HostMemoryUsageHigh
+          expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage on host node"
+            description: "Node memory usage has exceeded 90% (current: {{ $value | printf \"%.2f\" }}%)."
+
+        # 7. High CPU usage
+        - alert: HostCPUUsageHigh
+          expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage on host VM node"
+            description: "Node CPU utilization has exceeded 90% (current: {{ $value | printf \"%.2f\" }}%)."

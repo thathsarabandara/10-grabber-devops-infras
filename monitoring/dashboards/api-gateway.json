@@ -1,0 +1,27 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "HTTP Requests Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{job='api-gateway'}[5m])) by (status)", "legendFormat": "HTTP {{status}}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "API Gateway Memory Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        { "expr": "sum(container_memory_working_set_bytes{container='api-gateway'})", "legendFormat": "Bytes Used", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "API Gateway",
+  "version": 1
+}

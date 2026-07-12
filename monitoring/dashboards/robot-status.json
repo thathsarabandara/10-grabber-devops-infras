@@ -1,0 +1,18 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "Connected Robots Count",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(robot_connected_status)", "legendFormat": "Connected Robots", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "Robot Status",
+  "version": 1
+}

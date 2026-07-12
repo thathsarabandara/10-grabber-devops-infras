@@ -1,0 +1,317 @@
+version: '3.8'
+
+services:
+  # Core Infrastructure Services
+  db:
+    container_name: grabber-db
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME_GATEWAY}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./databases/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - grabber-network
+
+  redis:
+    container_name: grabber-redis
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grabber-network
+
+  adminer:
+    container_name: grabber-adminer
+    image: adminer:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - grabber-network
+
+  phpmyadmin:
+    container_name: grabber-phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - grabber-network
+
+  # MQTT Server Services
+  init-mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: init-mosquitto
+    env_file:
+      - .env
+    environment:
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+    volumes:
+      - ../10-grabber-mqtt-server/config:/mosquitto/config
+    command: >
+      sh -c "if [ ! -f /mosquitto/config/pwfile ] || [ ! -s /mosquitto/config/pwfile ]; then
+        touch /mosquitto/config/pwfile;
+        mosquitto_passwd -b /mosquitto/config/pwfile $$MQTT_USERNAME $$MQTT_PASSWORD;
+        echo 'Password file initialized.';
+      else
+        echo 'Password file already exists.';
+      fi"
+    networks:
+      - grabber-network
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: grabber-mqtt-server
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ../10-grabber-mqtt-server/config:/mosquitto/config
+      - ../10-grabber-mqtt-server/data:/mosquitto/data
+      - ../10-grabber-mqtt-server/log:/mosquitto/log
+    depends_on:
+      init-mosquitto:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z localhost 1883"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grabber-network
+
+  # Microservices
+  api-gateway:
+    container_name: grabber-api-gateway
+    build: 
+      context: ../05-grabber-api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME_GATEWAY}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SERVICE_URL=http://auth-service:8001
+      - ROBOT_SERVICE_URL=http://robot-service:8002
+      - TELEMETRY_SERVICE_URL=http://telemetry-service:8003
+      - AI_SERVICE_URL=http://ai-service:8004
+      - PORT=8000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      robot-service:
+        condition: service_healthy
+      telemetry-service:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    networks:
+      - grabber-network
+
+  auth-service:
+    container_name: grabber-auth-service
+    build:
+      context: ../06-grabber-auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${AUTH_DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - auth_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - grabber-network
+
+  robot-service:
+    container_name: grabber-robot-service
+    build:
+      context: ../07-grabber-robot-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    environment:
+      - PROJECT_NAME=Robot Service
+      - DATABASE_URL=${ROBOT_DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - grabber-network
+
+  telemetry-service:
+    container_name: grabber-telemetry-service
+    build:
+      context: ../08-grabber-telemetry-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    environment:
+      - PROJECT_NAME=Telemetry Service
+      - DATABASE_URL=${TELEMETRY_DATABASE_URL}
+    volumes:
+      - telemetry_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - grabber-network
+
+  ai-service:
+    container_name: grabber-ai-service
+    build:
+      context: ../09-grabber-ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    environment:
+      - PROJECT_NAME=AI Service
+      - DATABASE_URL=${AI_DATABASE_URL}
+      - CHROMA_DB_DIR=${CHROMA_DB_DIR}
+      - GESTURE_DB_DIR=${GESTURE_DB_DIR}
+      - UPLOAD_DIR=${UPLOAD_DIR}
+      - WHISPER_MODEL=${WHISPER_MODEL}
+      - MEDIAPIPE_DETECTION_CONFIDENCE=${MEDIAPIPE_DETECTION_CONFIDENCE}
+      - MEDIAPIPE_TRACKING_CONFIDENCE=${MEDIAPIPE_TRACKING_CONFIDENCE}
+      - XDG_CACHE_HOME=/data/cache
+    volumes:
+      - ai_vectordb:/data/vectordb/faces
+      - ai_gesture_vectordb:/data/vectordb/gestures
+      - ai_uploads:/data/uploads
+      - ai_model_cache:/data/cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    depends_on:
+      db:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - grabber-network
+
+  # Monitoring Services
+  prometheus:
+    container_name: grabber-prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - grabber-network
+
+  grafana:
+    container_name: grabber-grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - grabber-network
+
+  jenkins:
+    container_name: grabber-jenkins
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    restart: always
+    user: root
+    ports:
+      - "8082:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - grabber-network
+
+  jenkins-tunnel:
+    container_name: grabber-jenkins-tunnel
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel --no-autoupdate run --url http://jenkins:8080
+    depends_on:
+      - jenkins
+    networks:
+      - grabber-network
+
+volumes:
+  db_data:
+  ai_vectordb:
+    driver: local
+  ai_gesture_vectordb:
+    driver: local
+  ai_uploads:
+    driver: local
+  ai_model_cache:
+    driver: local
+  auth_uploads:
+    driver: local
+  telemetry_uploads:
+    driver: local
+  jenkins_data:
+    driver: local
+
+networks:
+  grabber-network:
+    driver: bridge

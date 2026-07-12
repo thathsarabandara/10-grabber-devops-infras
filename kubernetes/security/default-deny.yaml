@@ -1,0 +1,10 @@
+# default-deny.yaml - NetworkPolicy blocking ingress traffic in robot-platform
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: robot-platform
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

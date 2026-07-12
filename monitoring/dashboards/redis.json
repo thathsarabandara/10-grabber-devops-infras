@@ -1,0 +1,18 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "Redis Memory Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "redis_memory_used_bytes", "legendFormat": "Bytes Used", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "Redis Cache",
+  "version": 1
+}

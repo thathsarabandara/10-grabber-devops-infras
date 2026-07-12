@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-model-pvc
+  namespace: robot-platform
+  labels:
+    app.kubernetes.io/name: ai-service
+    app.kubernetes.io/part-of: grabber-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi

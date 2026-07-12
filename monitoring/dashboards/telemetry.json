@@ -1,0 +1,18 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "Ingested Telemetry Packets Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "rate(telemetry_ingestion_packets_total[5m])", "legendFormat": "packets/sec", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "Telemetry Service",
+  "version": 1
+}

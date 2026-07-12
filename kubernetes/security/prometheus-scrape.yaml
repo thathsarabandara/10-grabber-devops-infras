@@ -1,0 +1,24 @@
+# prometheus-scrape.yaml - Allow Prometheus to scrape metrics from platform namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: robot-platform
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8000 # App metrics port
+        - protocol: TCP
+          port: 8080 # Frontend metrics port
+        - protocol: TCP
+          port: 1883 # MQTT metrics port
+        - protocol: TCP
+          port: 9001 # MQTT WebSocket metrics port

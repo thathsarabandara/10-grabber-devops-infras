@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: robot-platform
+data:
+  init.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Initializing database schemas and users..."
+    mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" <<EOSQL
+    CREATE DATABASE IF NOT EXISTS auth_db;
+    CREATE DATABASE IF NOT EXISTS robot_db;
+    CREATE DATABASE IF NOT EXISTS telemetry_db;
+    CREATE DATABASE IF NOT EXISTS ai_db;
+
+    CREATE USER IF NOT EXISTS 'auth_user'@'%' IDENTIFIED BY '${MYSQL_AUTH_PASSWORD}';
+    GRANT ALL PRIVILEGES ON auth_db.* TO 'auth_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'robot_user'@'%' IDENTIFIED BY '${MYSQL_ROBOT_PASSWORD}';
+    GRANT ALL PRIVILEGES ON robot_db.* TO 'robot_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'telemetry_user'@'%' IDENTIFIED BY '${MYSQL_TELEMETRY_PASSWORD}';
+    GRANT ALL PRIVILEGES ON telemetry_db.* TO 'telemetry_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'ai_user'@'%' IDENTIFIED BY '${MYSQL_AI_PASSWORD}';
+    GRANT ALL PRIVILEGES ON ai_db.* TO 'ai_user'@'%';
+
+    FLUSH PRIVILEGES;
+    EOSQL
+    echo "Database initialization script executed successfully."

@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: robot-service
+  namespace: robot-platform
+  labels:
+    release: prometheus
+    app: robot-service
+spec:
+  selector:
+    matchLabels:
+      app: robot-service
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

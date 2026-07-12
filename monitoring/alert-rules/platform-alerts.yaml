@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: platform-alerts
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    release: prometheus
+spec:
+  groups:
+    - name: platform-service-alerts
+      rules:
+        # 1. Pod unavailable
+        - alert: PlatformServiceUnavailable
+          expr: up{job=~"auth-service|robot-service|telemetry-service|ai-service|api-gateway|frontend"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Service target {{ $labels.job }} is down"
+            description: "Prometheus has lost connection to the target {{ $labels.instance }} for more than 2 minutes."
+
+        # 2. Pod crash looping
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[5m]) * 60 > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash looping"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is restarting frequently."
+
+        # 3. High HTTP 5xx rate
+        - alert: HighHTTP5xxRate
+          expr: sum(rate(http_requests_total{status=~"5..",job="api-gateway"}[5m])) / sum(rate(http_requests_total{job="api-gateway"}[5m])) * 100 > 5
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High HTTP 5xx error rate on API Gateway"
+            description: "API Gateway has an HTTP 5xx error rate of {{ $value | printf \"%.2f\" }}% over the last 5 minutes."

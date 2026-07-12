@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robot-service
+  namespace: robot-platform
+  labels:
+    app: robot-service
+    app.kubernetes.io/name: robot-service
+    app.kubernetes.io/part-of: grabber-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: robot-service
+  template:
+    metadata:
+      labels:
+        app: robot-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: robot-service
+          image: ghcr.io/thathsarabandara/grabber-robot-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: PROJECT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: robot-service-config
+                  key: PROJECT_NAME
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: robot-service-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: robot-service-config
+                  key: REDIS_PORT
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: redis-password
+            - name: MQTT_BROKER
+              valueFrom:
+                configMapKeyRef:
+                  name: robot-service-config
+                  key: MQTT_BROKER
+            - name: MQTT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: robot-service-config
+                  key: MQTT_PORT
+            - name: MQTT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-secrets
+                  key: mqtt-username
+            - name: MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-secrets
+                  key: mqtt-password
+            - name: MYSQL_ROBOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: mysql-robot-password
+            - name: DATABASE_URL
+              value: mysql+aiomysql://robot_user:$(MYSQL_ROBOT_PASSWORD)@mysql:3306/robot_db
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secrets
+                  key: secret-key
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

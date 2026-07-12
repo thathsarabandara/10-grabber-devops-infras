@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grabber-platform
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: grabber-platform
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/thathsarabandara/11-grabber-devops-infras.git'
+    targetRevision: HEAD
+    path: kubernetes
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: robot-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

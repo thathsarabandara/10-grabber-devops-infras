@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-service-config
+  namespace: robot-platform
+  labels:
+    app: ai-service
+    app.kubernetes.io/name: ai-service
+    app.kubernetes.io/part-of: grabber-platform
+data:
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  PROJECT_NAME: "AI Service"
+  CHROMA_DB_DIR: "/data/vectordb/faces"
+  GESTURE_DB_DIR: "/data/vectordb/gestures"
+  UPLOAD_DIR: "/data/uploads"
+  WHISPER_MODEL: "base"
+  MEDIAPIPE_DETECTION_CONFIDENCE: "0.5"
+  MEDIAPIPE_TRACKING_CONFIDENCE: "0.5"
+  XDG_CACHE_HOME: "/data/cache"
