@@ -1,0 +1,58 @@
+# Real environment files
+.env
+config/repositories.env
+config/platform.env
+config/domains.env
+config/secrets.env
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+terraform.rc
+.terraformrc
+
+# Kubernetes secret files
+*.secret.yaml
+!*secret.example.yaml
+
+# Cloudflare credentials
+cloudflare/credentials.json
+*.credentials.json
+!cloudflare/secret.example.yaml
+
+# GHCR tokens
+ghcr-token.txt
+ghcr_token
+token.txt
+
+# kubeconfig files
+kubeconfig
+kubeconfig.yaml
+*.kubeconfig
+.kube/
+k3s.yaml
+
+# logs
+*.log
+logs/
+
+# backups
+backups/*
+!backups/.gitkeep
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS / temp files
+.DS_Store
+tmp/
+temp/
