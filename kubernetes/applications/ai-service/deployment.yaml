@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: robot-platform
+  labels:
+    app: ai-service
+    app.kubernetes.io/name: ai-service
+    app.kubernetes.io/part-of: grabber-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: ai-service
+          image: ghcr.io/thathsarabandara/grabber-ai-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: PROJECT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: PROJECT_NAME
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: REDIS_PORT
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: redis-password
+            - name: CHROMA_DB_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: CHROMA_DB_DIR
+            - name: GESTURE_DB_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: GESTURE_DB_DIR
+            - name: UPLOAD_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: UPLOAD_DIR
+            - name: WHISPER_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: WHISPER_MODEL
+            - name: MEDIAPIPE_DETECTION_CONFIDENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: MEDIAPIPE_DETECTION_CONFIDENCE
+            - name: MEDIAPIPE_TRACKING_CONFIDENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: MEDIAPIPE_TRACKING_CONFIDENCE
+            - name: XDG_CACHE_HOME
+              valueFrom:
+                configMapKeyRef:
+                  name: ai-service-config
+                  key: XDG_CACHE_HOME
+            - name: MYSQL_AI_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: mysql-ai-password
+            - name: DATABASE_URL
+              value: mysql+pymysql://ai_user:$(MYSQL_AI_PASSWORD)@mysql:3306/ai_db
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+              # GPU RESERVATIONS (To enable Nvidia GPU, uncomment below limits)
+              # nvidia.com/gpu: "1"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: ai-data-storage
+              mountPath: /data/vectordb/faces
+              subPath: faces
+            - name: ai-data-storage
+              mountPath: /data/vectordb/gestures
+              subPath: gestures
+            - name: ai-data-storage
+              mountPath: /data/uploads
+              subPath: uploads
+            - name: ai-data-storage
+              mountPath: /data/cache
+              subPath: cache
+      volumes:
+        - name: ai-data-storage
+          persistentVolumeClaim:
+            claimName: ai-model-pvc
+
