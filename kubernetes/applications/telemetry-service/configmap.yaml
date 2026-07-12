@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telemetry-service-config
+  namespace: robot-platform
+  labels:
+    app: telemetry-service
+    app.kubernetes.io/name: telemetry-service
+    app.kubernetes.io/part-of: grabber-platform
+data:
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  MQTT_BROKER: "mqtt"
+  MQTT_PORT: "1883"
+  PROJECT_NAME: "Telemetry Service"
