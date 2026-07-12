@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: robot-platform
+  labels:
+    app: api-gateway
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: grabber-platform
+data:
+  NODE_ENV: "production"
+  PORT: "8000"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  AUTH_SERVICE_URL: "http://auth-service:8000"
+  ROBOT_SERVICE_URL: "http://robot-service:8000"
+  TELEMETRY_SERVICE_URL: "http://telemetry-service:8000"
+  AI_SERVICE_URL: "http://ai-service:8000"
