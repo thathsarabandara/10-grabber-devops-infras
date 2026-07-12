@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: robot-platform
+  labels:
+    name: robot-platform
+    security: platform-core
