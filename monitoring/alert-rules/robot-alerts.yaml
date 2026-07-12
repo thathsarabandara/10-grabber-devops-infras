@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: robot-alerts
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    release: prometheus
+spec:
+  groups:
+    - name: platform-robot-alerts
+      rules:
+        # 1. Robot offline metric
+        - alert: RobotOffline
+          expr: robot_connected_status == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Robot connection offline"
+            description: "Robot {{ $labels.robot_id }} has disconnected from the MQTT broker."
+
+        # 2. Telemetry ingestion stopped
+        - alert: TelemetryIngestionStopped
+          expr: rate(telemetry_ingestion_packets_total[10m]) == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Telemetry ingestion stopped"
+            description: "No telemetry packets have been received by telemetry-service in the last 10 minutes."
+
+        # 3. AI inference failures
+        - alert: AIInferenceFailures
+          expr: sum(rate(ai_inference_failures_total[5m])) by (model) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "AI Inference failures detected"
+            description: "Model {{ $labels.model }} has failed inferences over the last 2 minutes."
