@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mqtt-monitor
+  namespace: robot-platform
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: mqtt
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s

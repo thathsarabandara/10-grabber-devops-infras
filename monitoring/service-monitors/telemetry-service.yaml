@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: telemetry-service-monitor
+  namespace: robot-platform
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: telemetry-service
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
