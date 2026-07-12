@@ -1,0 +1,18 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "MySQL Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "mysql_global_status_threads_connected", "legendFormat": "Active Connections", "refId": "A" }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "MySQL Database",
+  "version": 1
+}
