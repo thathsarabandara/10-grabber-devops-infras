@@ -1,0 +1,78 @@
+# monitoring-values.yaml - Custom values for kube-prometheus-stack in a single-node VM
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+prometheus:
+  service:
+    type: ClusterIP
+  prometheusSpec:
+    # 7 days retention for local development to conserve disk space
+    retention: 7d
+    
+    # Configure storage persistence
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+              
+    # Resource requests and limits tailored for a VM
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1500Mi
+
+    # Discover ServiceMonitors across all namespaces without namespace restrictions
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+alertmanager:
+  enabled: true
+  service:
+    type: ClusterIP
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+grafana:
+  enabled: true
+  service:
+    type: ClusterIP
+    
+  # Configure persistence for dashboards and users
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    accessModes: ["ReadWriteOnce"]
+    size: 5Gi
+
+  # Load administrative password from Kubernetes Secret
+  admin:
+    existingSecret: "grafana-admin-secret"
+    adminPasswordKey: "admin-password"
+
+  # Resource parameters
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
