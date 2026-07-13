@@ -65,6 +65,13 @@ spec:
                 secretKeyRef:
                   name: jwt-secrets
                   key: jwt-secret
+            - name: MYSQL_GATEWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: mysql-gateway-password
+            - name: DATABASE_URL
+              value: mysql+pymysql://gateway_user:$(MYSQL_GATEWAY_PASSWORD)@mysql:3306/gateway_db
             - name: AUTH_SERVICE_URL
               valueFrom:
                 configMapKeyRef:
