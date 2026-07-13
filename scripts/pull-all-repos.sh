@@ -23,11 +23,11 @@ echo "=============================================="
 # Array of services
 REPOS=(
     "frontend|${FRONTEND_BRANCH}"
-    "api-gateway|${API_GATEWAY_BRANCH}"
-    "auth-service|${AUTH_SERVICE_BRANCH}"
-    "robot-service|${ROBOT_SERVICE_BRANCH}"
+    "api-gateway|${GATEWAY_BRANCH}"
+    "auth-service|${AUTH_BRANCH}"
+    "robot-service|${ROBOT_BRANCH}"
     "telemetry-service|${TELEMETRY_BRANCH}"
-    "ai-service|${AI_SERVICE_BRANCH}"
+    "ai-service|${AI_BRANCH}"
 )
 
 for entry in "${REPOS[@]}"; do

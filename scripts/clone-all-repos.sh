@@ -32,11 +32,11 @@ fi
 # Format: "local_dir_name|repo_url|branch"
 REPOS=(
     "frontend|${FRONTEND_REPO}|${FRONTEND_BRANCH}"
-    "api-gateway|${API_GATEWAY_REPO}|${API_GATEWAY_BRANCH}"
-    "auth-service|${AUTH_SERVICE_REPO}|${AUTH_SERVICE_BRANCH}"
-    "robot-service|${ROBOT_SERVICE_REPO}|${ROBOT_SERVICE_BRANCH}"
-    "telemetry-service|${TELEMETRY_SERVICE_REPO}|${TELEMETRY_BRANCH}"
-    "ai-service|${AI_SERVICE_REPO}|${AI_SERVICE_BRANCH}"
+    "api-gateway|${GATEWAY_REPO}|${GATEWAY_BRANCH}"
+    "auth-service|${AUTH_REPO}|${AUTH_BRANCH}"
+    "robot-service|${ROBOT_REPO}|${ROBOT_BRANCH}"
+    "telemetry-service|${TELEMETRY_REPO}|${TELEMETRY_BRANCH}"
+    "ai-service|${AI_REPO}|${AI_BRANCH}"
 )
 
 for entry in "${REPOS[@]}"; do
