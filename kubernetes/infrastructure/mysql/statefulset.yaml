@@ -59,6 +59,11 @@ spec:
                 secretKeyRef:
                   name: mysql-secrets
                   key: mysql-ai-password
+            - name: MYSQL_GATEWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: mysql-gateway-password
           resources:
             requests:
               cpu: 250m
