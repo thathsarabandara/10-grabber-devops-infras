@@ -68,7 +68,7 @@ spec:
                   name: jwt-secrets
                   key: secret-key
           ports:
-            - containerPort: 8000
+            - containerPort: 8001
               name: http
           resources:
             requests:
@@ -80,7 +80,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 8001
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -88,7 +88,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8000
+              port: 8001
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
