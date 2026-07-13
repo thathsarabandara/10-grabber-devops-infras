@@ -67,6 +67,71 @@ spec:
                 secretKeyRef:
                   name: jwt-secrets
                   key: secret-key
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-secrets
+                  key: mail-username
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smtp-secrets
+                  key: mail-password
+            - name: MAIL_FROM
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: MAIL_FROM
+            - name: MAIL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: MAIL_PORT
+            - name: MAIL_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: MAIL_SERVER
+            - name: MAIL_FROM_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: MAIL_FROM_NAME
+            - name: MAIL_STARTTLS
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: MAIL_STARTTLS
+            - name: MAIL_SSL_TLS
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: MAIL_SSL_TLS
+            - name: USE_CREDENTIALS
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: USE_CREDENTIALS
+            - name: VALIDATE_CERTS
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: VALIDATE_CERTS
+            - name: ALGORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: ALGORITHM
+            - name: ACCESS_TOKEN_EXPIRE_MINUTES
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: ACCESS_TOKEN_EXPIRE_MINUTES
+            - name: REFRESH_TOKEN_EXPIRE_DAYS
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-config
+                  key: REFRESH_TOKEN_EXPIRE_DAYS
           ports:
             - containerPort: 8001
               name: http
