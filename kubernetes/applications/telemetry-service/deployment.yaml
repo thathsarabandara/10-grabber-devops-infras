@@ -83,7 +83,7 @@ spec:
             - name: DATABASE_URL
               value: mysql+aiomysql://telemetry_user:$(MYSQL_TELEMETRY_PASSWORD)@mysql:3306/telemetry_db
           ports:
-            - containerPort: 8000
+            - containerPort: 8003
               name: http
           resources:
             requests:
@@ -95,7 +95,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 8003
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -103,7 +103,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8000
+              port: 8003
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5

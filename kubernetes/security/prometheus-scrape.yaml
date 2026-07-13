@@ -15,7 +15,15 @@ spec:
               name: monitoring
       ports:
         - protocol: TCP
-          port: 8000 # App metrics port
+          port: 8000 # API Gateway metrics port
+        - protocol: TCP
+          port: 8001 # Auth metrics port
+        - protocol: TCP
+          port: 8002 # Robot metrics port
+        - protocol: TCP
+          port: 8003 # Telemetry metrics port
+        - protocol: TCP
+          port: 8004 # AI metrics port
         - protocol: TCP
           port: 8080 # Frontend metrics port
         - protocol: TCP

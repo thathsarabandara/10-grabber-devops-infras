@@ -98,7 +98,7 @@ spec:
             - name: DATABASE_URL
               value: mysql+pymysql://ai_user:$(MYSQL_AI_PASSWORD)@mysql:3306/ai_db
           ports:
-            - containerPort: 8000
+            - containerPort: 8004
               name: http
           resources:
             requests:
@@ -112,7 +112,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 8004
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 5
@@ -120,7 +120,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8000
+              port: 8004
             initialDelaySeconds: 20
             periodSeconds: 15
             timeoutSeconds: 5

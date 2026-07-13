@@ -14,6 +14,7 @@ data:
     CREATE DATABASE IF NOT EXISTS robot_db;
     CREATE DATABASE IF NOT EXISTS telemetry_db;
     CREATE DATABASE IF NOT EXISTS ai_db;
+    CREATE DATABASE IF NOT EXISTS gateway_db;
 
     CREATE USER IF NOT EXISTS 'auth_user'@'%' IDENTIFIED BY '${MYSQL_AUTH_PASSWORD}';
     GRANT ALL PRIVILEGES ON auth_db.* TO 'auth_user'@'%';
@@ -26,6 +27,9 @@ data:
 
     CREATE USER IF NOT EXISTS 'ai_user'@'%' IDENTIFIED BY '${MYSQL_AI_PASSWORD}';
     GRANT ALL PRIVILEGES ON ai_db.* TO 'ai_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'gateway_user'@'%' IDENTIFIED BY '${MYSQL_GATEWAY_PASSWORD}';
+    GRANT ALL PRIVILEGES ON gateway_db.* TO 'gateway_user'@'%';
 
     FLUSH PRIVILEGES;
     EOSQL

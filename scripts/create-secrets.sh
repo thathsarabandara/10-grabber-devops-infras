@@ -58,6 +58,7 @@ kubectl create secret generic mysql-secrets \
   --from-literal=mysql-robot-password="$DB_PASSWORD" \
   --from-literal=mysql-telemetry-password="$DB_PASSWORD" \
   --from-literal=mysql-ai-password="$DB_PASSWORD" \
+  --from-literal=mysql-gateway-password="$DB_PASSWORD" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # B. Redis Secrets
