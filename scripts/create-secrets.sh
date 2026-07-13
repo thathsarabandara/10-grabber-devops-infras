@@ -44,6 +44,8 @@ MQTT_USERNAME="${MQTT_USERNAME:-mqtt_user}"
 MQTT_PASSWORD="${MQTT_PASSWORD:-mqtt_password_placeholder}"
 JWT_SECRET="${JWT_SECRET:-jwt_secret_placeholder_must_be_long_and_secure_value}"
 SECRET_KEY="${SECRET_KEY:-secret_key_placeholder}"
+MAIL_USERNAME="${MAIL_USERNAME:-}"
+MAIL_PASSWORD="${MAIL_PASSWORD:-}"
 GHCR_USERNAME="${GHCR_USERNAME:-ghcr_user}"
 GHCR_TOKEN="${GHCR_TOKEN:-ghcr_token_placeholder}"
 GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-admin}"
@@ -106,6 +108,14 @@ echo "Creating Cloudflare Tunnel secret..."
 kubectl create secret generic cloudflare-tunnel-token \
   --namespace=cloudflare \
   --from-literal=tunnel-token="$CLOUDFLARE_TUNNEL_TOKEN" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# H. SMTP Credentials
+echo "Creating SMTP credentials secret..."
+kubectl create secret generic smtp-secrets \
+  --namespace=robot-platform \
+  --from-literal=mail-username="$MAIL_USERNAME" \
+  --from-literal=mail-password="$MAIL_PASSWORD" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "=============================================="
