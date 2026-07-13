@@ -34,11 +34,10 @@ fi
 # 2. Install Helm
 if ! command -v helm &> /dev/null; then
     echo "Installing Helm..."
-    curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor --yes -o /usr/share/keyrings/helm.gpg
-    chmod 644 /usr/share/keyrings/helm.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
-    apt-get update -y
-    apt-get install -y helm
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+    rm get_helm.sh
     echo "Helm version: $(helm version --short)"
 else
     echo "Helm is already installed: $(helm version --short)"
