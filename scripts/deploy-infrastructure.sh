@@ -11,7 +11,7 @@ echo "=============================================="
 
 # 1. Namespaces
 echo "Deploying namespaces..."
-kubectl apply -f "${REPO_ROOT}/kubernetes/namespaces/platform-namespaces.yaml"
+kubectl apply -f "${REPO_ROOT}/kubernetes/namespaces/"
 
 # 2. NGINX Ingress Controller
 echo "Deploying NGINX Ingress Controller via Helm..."
