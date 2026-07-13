@@ -12,8 +12,8 @@
 ## 🎥 Video Demonstration
 
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
-    <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Grabber Demo Video" width="70%">
+  <a href="https://youtu.be/ag_uQFBAfuA?si=FSMpZrUkmNSjFYqq">
+    <img src="https://img.youtube.com/vi/ag_uQFBAfuA/maxresdefault.jpg" alt="Grabber Demo Video" width="70%">
   </a>
   <br/>
   <sub>Click the image above to watch the demonstration video on YouTube.</sub>
