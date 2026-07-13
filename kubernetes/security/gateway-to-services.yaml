@@ -19,4 +19,10 @@ spec:
               app: api-gateway
       ports:
         - protocol: TCP
-          port: 8000
+          port: 8001
+        - protocol: TCP
+          port: 8002
+        - protocol: TCP
+          port: 8003
+        - protocol: TCP
+          port: 8004
