@@ -5,7 +5,7 @@ locals {
     "environment"                  = var.environment
   }
 
-  tunnel_cname_target = "${var.cloudflare_tunnel_id}.cfargotunnel.com"
+  tunnel_cname_target     = "${var.cloudflare_tunnel_id}.cfargotunnel.com"
   ingress_internal_origin = "http://ingress-nginx-controller.${var.ingress_namespace}.svc.cluster.local:80"
 }
 
@@ -67,7 +67,7 @@ module "cloudflare" {
   cloudflare_zone_id                 = var.cloudflare_zone_id
   cloudflare_tunnel_id               = var.cloudflare_tunnel_id
   tunnel_cname_target                = locals.tunnel_cname_target
-  
+
   dashboard_domain = var.dashboard_domain
   api_domain       = var.api_domain
   grafana_domain   = var.grafana_domain
